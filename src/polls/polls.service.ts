@@ -342,7 +342,6 @@ export class PollsService {
       // Deleting all existing votes for this poll
       await this.voteModel.deleteMany({ poll: new Types.ObjectId(pollId) });
 
-      // Resetting the vote counts in poll options
       updateData.options = updateData.options.map(option => ({ text: option.text, votes: 0 }));
     }
 
@@ -379,10 +378,25 @@ export class PollsService {
     // @desc    get admin polls
      
   async getAdminPolls(userId: string) {
-    return await this.pollModel
+    const polls = await this.pollModel
       .find({ createdBy: new Types.ObjectId(userId) })
       .populate('allowedUsers', 'name email')
       .sort({ createdAt: -1 });
+
+    // Calculating the vote counts for each poll
+    for (const poll of polls) {
+      const votes = await this.voteModel.find({ poll: poll._id });
+
+      
+      poll.options.forEach(option => (option.votes = 0));
+      votes.forEach(vote => {
+        if (vote.optionIndex >= 0 && vote.optionIndex < poll.options.length) {
+          poll.options[vote.optionIndex].votes += 1;
+        }
+      });
+    }
+
+    return polls;
   }
 
   //=========================================================================================================================//
@@ -469,9 +483,9 @@ export class PollsService {
     // Basic sanitization - remove potentially dangerous characters
     return input
       .trim()
-      .replace(/[<>]/g, '') // Remove < and > characters
-      .replace(/javascript:/gi, '') // Remove javascript: protocol
-      .replace(/on\w+=/gi, ''); // Remove event handlers
+      .replace(/[<>]/g, '') 
+      .replace(/javascript:/gi, '') 
+      .replace(/on\w+=/gi, ''); 
   }
 
   //=========================================================================================================================//
