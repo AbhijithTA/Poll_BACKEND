@@ -6,11 +6,6 @@ import * as bcrypt from 'bcryptjs';
 import { User, UserDocument } from '../schemas/user.schema';
 
 
-
-/**
- * @description Service for handling user authentication, registration, and user management
- 
- */
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);

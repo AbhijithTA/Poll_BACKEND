@@ -9,15 +9,27 @@ import { UserRole } from '../schemas/user.schema';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  //=========================================================================================================================//
+
+  // @desc    register user
+
   @Post('register')
   async register(@Body() userData: { name: string; email: string; password: string; role?: string }) {
     return this.authService.register(userData);
   }
 
+  //=========================================================================================================================//
+
+  // @desc    login user
+
   @Post('login')
   async login(@Body() credentials: { email: string; password: string }) {
     return this.authService.login(credentials);
   }
+
+  //=========================================================================================================================//
+
+  // @desc    logout user
 
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
@@ -25,10 +37,17 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
+  //=========================================================================================================================//
+
+  // @desc    search users
+
   @Get('search-users')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(UserRole.ADMIN)
   async searchUsers(@Query('q') query: string) {
     return this.authService.searchUsers(query);
   }
+
+  //=========================================================================================================================//
+
 }
