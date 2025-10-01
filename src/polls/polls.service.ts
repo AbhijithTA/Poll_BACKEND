@@ -33,7 +33,7 @@ export class PollsService {
       // Enhanced validation
       await this.validatePollData(pollData);
 
-      // Check for duplicate poll titles (case-insensitive)
+      // Checking for duplicate poll titles
       const existingPoll = await this.pollModel.findOne({
         title: { $regex: new RegExp(`^${pollData.title}$`, 'i') },
         createdBy: new Types.ObjectId(pollData.createdBy)
@@ -49,23 +49,22 @@ export class PollsService {
         await this.validateAllowedUsers(pollData.allowedUsers);
       }
 
-      // Calculate expiration time
+      // Calculating the expry time
       const expiresAt = new Date(Date.now() + pollData.duration * 60000);
       
-      // Sanitize and prepare poll options
+      // Sanitizing the poll options
       const pollOptions = pollData.options.map(option => ({ 
         text: this.sanitizeInput(option.text), 
         votes: 0 
       }));
 
-      // Convert IDs to ObjectIds
       const createdBy = typeof pollData.createdBy === 'string' 
         ? new Types.ObjectId(pollData.createdBy)
         : pollData.createdBy;
 
       const allowedUserObjectIds = pollData.allowedUsers.map(userId => new Types.ObjectId(userId));
 
-      // Create poll
+      // Creating the poll
       const poll = await this.pollModel.create({
         title: this.sanitizeInput(pollData.title),
         options: pollOptions,
@@ -155,7 +154,6 @@ export class PollsService {
         allowedUserId.equals(userObjectId)
       );
       
-      // Allow admins to view private polls (but they can't vote)
       const isAdmin = userRole === 'admin';
       
       if (!isAllowed && !isAdmin) {
@@ -194,7 +192,7 @@ export class PollsService {
       throw new NotFoundException('Poll not found');
     }
 
-    // Prevent admins from voting
+    // Preventing the admins from voting
     if (userRole === 'admin') {
       throw new ForbiddenException('Admins cannot vote in polls');
     }
@@ -296,7 +294,7 @@ export class PollsService {
   async getPollResults(pollId: string, userId: string, userRole?: string) {
     const poll = await this.getPollById(pollId, userId, userRole);
     
-    // checking the user has voted in this poll or poll is expired
+    // checking the user has voted in this poll or the poll is expired
     const userVote = await this.voteModel.findOne({
       user: new Types.ObjectId(userId),
       poll: new Types.ObjectId(pollId),

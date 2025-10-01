@@ -76,7 +76,7 @@ export class AuthService {
 
   //=========================================================================================================================//
 
-  // @desc    login user
+  // @desc    login user (Added logger for unauthorized or invalid credentials attempts)
   // @route   post /api/auth/login
   // @access  public
 
