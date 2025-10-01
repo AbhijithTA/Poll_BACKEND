@@ -1,98 +1,120 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Polling System – Backend (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Concise backend for a polling system built with NestJS + Mongoose. It implements secure authentication, role-based access, private/public polls, voting, validation, and robust error handling.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Tech Stack
+- NestJS (REST API)
+- MongoDB + Mongoose
+- Passport-JWT (Auth)
+- class-validator/class-transformer (DTO validation)
+- @nestjs/config (env)
+- Nodemon + ts-node (dev)
 
-## Description
+## Core Features
+- Authentication
+  - Register, login, logout
+  - Password hashing (bcrypt with environment-based salt rounds)
+  - JWT issuance and verification via `JwtModule`/`JwtStrategy`
+- Role-Based Access
+  - Roles: `admin`, `user`
+  - `RolesGuard` + `@Roles()` decorator to protect admin-only routes
+- Polling
+  - Admin-only poll creation, edit (only active), delete, list (own polls)
+  - Public/private visibility
+  - Private polls: allow-list of user IDs
+  - Duration set at creation (1–120 minutes). Expired polls are read-only
+  - Users can vote once per poll; duplicate voting prevented via compound index
+  - Dynamic results: vote counts computed from `Vote` collection for accuracy
+- Validation & Security
+  - Global `ValidationPipe` (whitelist, forbidNonWhitelisted, transform)
+  - DTO validation for title, options, duration, allowed users (ObjectId)
+  - Input sanitization of poll title/options
+  - Consistent error responses; explicit 400/401/403/404
+  - Environment validation on boot (fail-fast if missing)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Project Layout (backend)
+- `src/app.module.ts` – module wiring (Config, Mongoose, Auth, Polls)
+- `src/main.ts` – app bootstrap, global pipes, CORS, health, graceful shutdown
+- `src/auth/*` – auth controller/service/strategy/module
+- `src/polls/*` – polls controller/service/module
+- `src/dto/poll.dto.ts` – DTOs with class-validator
+- `src/schemas/*` – Mongoose schemas (User, Poll, Vote) + indexes
+- `src/guards/roles.guards.ts` – role guard
+- `src/decorators/roles.decorator.ts` – roles decorator
 
-## Project setup
+## Environment
+Create `.env` in `polling-backend/`:
 
-```bash
-$ npm install
+```
+PORT=3000
+MONGODB_URI=mongodb://localhost:27017/polling-system
+JWT_SECRET=change-this-to-a-long-random-string
+BCRYPT_ROUNDS=12
+ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-## Compile and run the project
+Notes
+- `JWT_SECRET` is required for signing/verifying tokens
+- `BCRYPT_ROUNDS` controls hashing workload (defaults to 12)
+- `ALLOWED_ORIGINS` enables CORS from your frontend
 
-```bash
-# development
-$ npm run start
+## Scripts
+```
+# Dev (nodemon via ts-node)
+npm run dev
 
-# watch mode
-$ npm run start:dev
+# Build & Prod
+npm run build
+npm run start:prod
 
-# production mode
-$ npm run start:prod
 ```
 
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+## Running Locally
+1) Install deps
+```
+npm install
+```
+2) Configure `.env` (see above)
+3) Start MongoDB
+4) Run
+```
+npm run dev
 ```
 
-## Deployment
+## High-Level API (selected)
+- Auth
+  - `POST /auth/register`
+  - `POST /auth/login`
+  - `POST /auth/logout` (token removal client-side)
+  - `GET /auth/search-users?q=...` (admin) – search by name/email
+- Polls (JWT required)
+  - `GET /polls` – public + allowed private for current user
+  - `GET /polls/admin` (admin) – polls created by admin
+  - `POST /polls` (admin) – create poll
+  - `PUT /polls/:id` (admin) – edit poll (only if active)
+  - `DELETE /polls/:id` (admin)
+  - `GET /polls/:id` – view by access rules
+  - `POST /polls/:id/vote` – vote once (active only)
+  - `GET /polls/:id/results` – results (respect access rules)
+  - `GET /polls/user/votes` – my votes
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Validation & Edge Cases
+- Title: 3–500 chars; Options: 2–10; Each option 1–200 chars
+- Duration: 1–120 minutes (2 hours max)
+- Private polls: `allowedUsers` must be valid user IDs; existence verified
+- Duplicate votes prevented by unique index `(user, poll)`
+- Admin can view private polls but cannot vote
+- Expired polls: voting blocked, results visible
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Security Considerations
+- JWT signing via `JwtModule` and verification via `JwtStrategy`
+- Password hashing with bcrypt (`BCRYPT_ROUNDS` configurable)
+- Tokens require `JWT_SECRET`; app fails fast if missing
+- CORS restricted by `ALLOWED_ORIGINS`
+- Graceful shutdown + health endpoint
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## Notes on AI Assistance 
+Some part of this project I utilized AI tools (ChatGPT/DeepSeek) to accelerate development through boilerplate code generation, debugging assistance, and architectural guidance. These tools helped quickly set up Nest.js/React foundations and resolve technical challenges like MongoDB index issues, while maintaining full code understanding and customization. The AI served as a development accelerator while all implementation decisions remained developer-driven.
+---
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
