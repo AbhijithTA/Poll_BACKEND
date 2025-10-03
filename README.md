@@ -83,7 +83,6 @@ npm run start:prod
 - **User 1:** test@gmail.com / test123
 - **User 2:** test2@gmail.com / test123
 
----
 
 ## Running Locally
 1) Install deps

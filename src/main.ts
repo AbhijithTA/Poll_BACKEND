@@ -5,6 +5,10 @@ import { getConnectionToken } from '@nestjs/mongoose';
 import type { Connection } from 'mongoose';
 
 async function bootstrap() {
+  // Set memory optimization for production
+  if (process.env.NODE_ENV === 'production') {
+    process.env.NODE_OPTIONS = '--max-old-space-size=256';
+  }
 
   const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI'];
   const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -14,7 +18,9 @@ async function bootstrap() {
     process.exit(1);
   }
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: process.env.NODE_ENV === 'production' ? ['error', 'warn', 'log'] : ['log', 'debug', 'error', 'verbose', 'warn'],
+  });
 
   app.useGlobalPipes(new ValidationPipe({
     transform: true,
