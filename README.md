@@ -87,7 +87,7 @@ npm run start:prod
 
 ## 🚀 LIVE DEMO
 
-**LINK:** [Live Demo URL]
+**LINK:** poll-frontend-self.vercel.app
 
 ### 🔐 TESTING CREDENTIALS
 
