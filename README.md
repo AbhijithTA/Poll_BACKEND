@@ -69,6 +69,22 @@ npm run start:prod
 
 ```
 
+## 🚀 LIVE DEMO
+
+**LINK:** [Live Demo URL]
+
+### 🔐 TESTING CREDENTIALS
+
+**ADMIN ACCOUNT**
+- **Email:** admin@gmail.com
+- **Password:** test123
+
+**USER ACCOUNTS**
+- **User 1:** test@gmail.com / test123
+- **User 2:** test2@gmail.com / test123
+
+---
+
 ## Running Locally
 1) Install deps
 ```

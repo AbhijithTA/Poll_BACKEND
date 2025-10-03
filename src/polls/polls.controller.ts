@@ -10,6 +10,8 @@ import {
     Req,
     UsePipes,
     ValidationPipe,
+    Query,
+    BadRequestException,
   } from '@nestjs/common';
   import { AuthGuard } from '@nestjs/passport';
   import { PollsService } from './polls.service';
@@ -53,8 +55,19 @@ import { CreatePollDto, UpdatePollDto, VoteDto } from '../dto/poll.dto';
     // @route   get /api/polls
     // @access  user
 
-    async getPolls(@Req() req) {
-      return this.pollsService.getPollsForUser(req.user._id, req.user.role);
+    async getPolls(@Req() req, @Query('page') page?: string, @Query('limit') limit?: string) {
+      const pageNum = page ? parseInt(page, 10) : 1;
+      const limitNum = limit ? parseInt(limit, 10) : 10;
+      
+      // Validate pagination parameters
+      if (pageNum < 1) {
+        throw new BadRequestException('Page must be greater than 0');
+      }
+      if (limitNum < 1 || limitNum > 100) {
+        throw new BadRequestException('Limit must be between 1 and 100');
+      }
+      
+      return this.pollsService.getPollsForUser(req.user._id, req.user.role, pageNum, limitNum);
     }
 
   //=========================================================================================================================//

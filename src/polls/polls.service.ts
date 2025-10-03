@@ -30,10 +30,10 @@ export class PollsService {
     try {
       this.logger.log(`Creating poll: ${pollData.title} by user: ${pollData.createdBy}`);
 
-      // Enhanced validation
+      // validation
       await this.validatePollData(pollData);
 
-      // Checking for duplicate poll titles
+      // Checking for duplicate poll 
       const existingPoll = await this.pollModel.findOne({
         title: { $regex: new RegExp(`^${pollData.title}$`, 'i') },
         createdBy: new Types.ObjectId(pollData.createdBy)
@@ -48,11 +48,8 @@ export class PollsService {
       if (pollData.visibility === PollVisibility.PRIVATE && pollData.allowedUsers.length > 0) {
         await this.validateAllowedUsers(pollData.allowedUsers);
       }
-
-      // Calculating the expry time
       const expiresAt = new Date(Date.now() + pollData.duration * 60000);
       
-      // Sanitizing the poll options
       const pollOptions = pollData.options.map(option => ({ 
         text: this.sanitizeInput(option.text), 
         votes: 0 
@@ -97,9 +94,26 @@ export class PollsService {
 
     // @desc    get polls for user
 
-  async getPollsForUser(userId: string, userRole?: string) {
+  async getPollsForUser(userId: string, userRole?: string, page: number = 1, limit: number = 10) {
     const userObjectId = new Types.ObjectId(userId);
+    const skip = (page - 1) * limit;
     
+
+    const totalCount = await this.pollModel.countDocuments({
+      $or: [
+        { visibility: PollVisibility.PUBLIC },
+        { 
+          visibility: PollVisibility.PRIVATE,
+          allowedUsers: userObjectId
+        },
+        ...(userRole === 'admin' ? [{ 
+          visibility: PollVisibility.PRIVATE,
+          createdBy: userObjectId
+        }] : [])
+      ],
+      isActive: true
+    });
+
     const polls = await this.pollModel.find({
       $or: [
         { visibility: PollVisibility.PUBLIC },
@@ -113,7 +127,11 @@ export class PollsService {
         }] : [])
       ],
       isActive: true
-    }).populate('createdBy', 'name email');
+    })
+    .populate('createdBy', 'name email')
+    .sort({ createdAt: -1 }) 
+    .skip(skip)
+    .limit(limit);
 
     
     for (const poll of polls) {
@@ -134,7 +152,19 @@ export class PollsService {
       (poll as any).userVote = userVote ? userVote.optionIndex : null;
       (poll as any).hasVoted = !!userVote;
     }
-    return polls;
+
+    // Return paginated response
+    return {
+      polls,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+        hasNextPage: page < Math.ceil(totalCount / limit),
+        hasPrevPage: page > 1,
+        limit
+      }
+    };
   }
 
   //=========================================================================================================================//
@@ -337,7 +367,7 @@ export class PollsService {
       JSON.stringify(updateData.options.map(opt => opt.text)) !== JSON.stringify(poll.options.map(opt => opt.text));
 
     if (optionsChanged) {
-      // Deleting all existing votes for this poll
+      // Deleting all the votes in this poll
       await this.voteModel.deleteMany({ poll: new Types.ObjectId(pollId) });
 
       updateData.options = updateData.options.map(option => ({ text: option.text, votes: 0 }));

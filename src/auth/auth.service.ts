@@ -195,7 +195,6 @@ export class AuthService {
   // @desc    validate name
 
   private isValidName(name: string): boolean {
-    // 2-50 characters, only letters and spaces
     const nameRegex = /^[a-zA-Z\s]{2,50}$/;
     return nameRegex.test(name);
   }
