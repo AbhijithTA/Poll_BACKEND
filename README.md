@@ -71,7 +71,7 @@ npm run start:prod
 
 ## 🚀 LIVE DEMO
 
-**LINK:** [https://poll-frontend-self.vercel.app.com](https://poll-frontend-self.vercel.app.com)
+**LINK:** [https://poll-frontend-self.vercel.app](https://poll-frontend-self.vercel.app)
 
 > Note: Backend is hosted on Render free tier. The server may spin down on inactivity and can take a short while to wake up on the first request.
 
