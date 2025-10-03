@@ -43,6 +43,8 @@ Concise backend for a polling system built with NestJS + Mongoose. It implements
 - `src/decorators/roles.decorator.ts` – roles decorator
 
 ## Environment
+
+### Local Development
 Create `.env` in `polling-backend/`:
 
 ```
@@ -53,7 +55,21 @@ BCRYPT_ROUNDS=12
 ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-Notes
+### Production (Render)
+Set these environment variables in Render dashboard:
+
+```
+NODE_ENV=production
+PORT=3000
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/polling-system
+JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
+BCRYPT_ROUNDS=12
+ALLOWED_ORIGINS=https://your-app-name.vercel.app,https://your-app-name-git-main.vercel.app
+```
+
+**Important Notes:**
+- Replace `your-app-name` with your actual Vercel app name
+- Add both the main domain and preview domain URLs
 - `JWT_SECRET` is required for signing/verifying tokens
 - `BCRYPT_ROUNDS` controls hashing workload (defaults to 12)
 - `ALLOWED_ORIGINS` enables CORS from your frontend
